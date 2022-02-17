@@ -1,0 +1,167 @@
+---
+title: "Tarea2//Genomica funcional"
+author: "Perla Rodríguez"
+date: "2/16/2022"
+output: rmdformats::readthedown
+
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Problema 1
+
+```Considera las siguientes cantidades, discute y justifica que tipo de distribución de probabilidad pueden tener las siguientes variables:```
+**a. El número (talla) de calzado de adultos varones en México **
+Considero que, tomando en cuenta que el promedio de muestreo de altura  y peso en las poblaciones tiende a tener una distribución normal, la talla de calzado de adultos varones en México también debe de tener una 
+distribución normal (Gaussiana), puesto que también es una variable aleatoria y continúa. 
+
+**b. La distribución de habitantes en asentamientos humanos de México.**
+Creo que en este caso, es mucho más probable que los habitantes se asienten con más facilidas en un lugar con más gente, a un lugar con poca gente, como lo es el caso de las capitales estatales o las grandes ciudades (Cdmx, NY, Londres), ciudades a donde la gente elige migrar, por lo tanto la distribución de probabilidad sería de cola larga. 
+
+**c. La velocidad promedio de los automóviles en Bernardo Quintana a las 9 de la mañana en un día laborable.** 
+Sería una velocidad de cola larga, porque es probable que haya mucho tráfico y la mayoria de los automóviles vaya a una baja velocidad, y muy pocos puedan ir a una alta velocidad. 
+
+**d. La velocidad promedio de los automóviles en Bernardo Quintana a las 3 de la mañana.**
+Creo que sería una distribución de Poisson debido a que es la probabilidad de que haya coches a una gran velocidad y a una velocidad menor a la mínima, pero la mayoría de los coches que transitan pueden ir a la velocidad indicada dentro del marco legal. 
+
+## Problema 2 
+```Supongamos que tenemos dos nodos (A,B) en una red. El nodo A y B tienen el mismo degree, pero el A tiene un coeficiente de clusterización de 1 y el nodo B un coeficiente bajo.Dibuja está situación y explica cuál sería una mejor diana si quieres eliminarlos y afectar a la red.```
+
+![red](red.png)
+__NOTA: No entendí la parte de eliminarlos y afectar la red, puesto que en mi grafico, si elimino estos nodos me quedarían los clusters separados y por lo tanto dos redes.__
+
+## Problema 3 
+```Elabora un programa en R que usando funciones calcule, a partir de una matriz de adyacencia (Sólo utiliza R base para resolver este problema):```
+__a. Si la red es dirigida o no.__
+En un grafo no dirigido la diagonal principal de la matriz de adyacencia contiene ceros, por lo que esto será nuestra condicional. 
+![grafo](plot_zoom.png)
+
+
+```{r}
+#Creo mis vectores con los valores de conexión para posteriormente unirlos en una matriz
+v1<-c(0,1,0,1,1)
+v2<-c(1,0,1,0,0)
+v3<-c(1,0,0,1,1)
+v4<-c(1,1,1,0,0)
+v5<-c(1,0,0,1,0)
+mat_ad <- rbind(v1,v2,v3,v4,v5)
+mat_ad
+#La función diag() extrae la diagonal principal de una matriz:
+
+fun_A<- function(mat_ad)  {
+ if (sum(diag(mat_ad))==0) {
+   cat ("Red no dirigida")
+   } else  { 
+    cat ("Red dirigida")}
+}
+
+fun_A(mat_ad) # ahora puedo usar mi funcion en cualquier matriz
+```
+__b. Si la red es pesada o no.__
+Las redes pesadas difieren en su número por importancia de conexión, por lo que sí los números de la matriz son diferentes a 0 y 1, nuestra red es pesada, esta carácteristica será nuestra condicional para la función b.
+```{r}
+#primero le asigno nombres a mis columnas para poder manipularlas 
+colnames(mat_ad)<- c("col1", "col2", "col3", "col4", "col5")
+mat_ad
+
+#Utilizaré la funcion apply con el argumento FUN para poder aplicarle la funcion a todos los objetos de mi matriz 
+# en este caso quiero saber cúal es el número más grande de mi matriz, por columna y por renglon
+#renglon==1 
+#columnas==2 
+apply(mat_ad, 1, FUN = max)
+apply(mat_ad, 2, FUN = max)
+#Si mi red no es pesada, la sumatoria del número más grande por renglon y por columna debe ser menor o igual a 5
+fun_b<-function(mat_ad)  {
+  if (sum(apply(mat_ad, 1, FUN = max))<=5) {
+    cat ("Red no pesada")
+  } else  { 
+    cat ("pesada")}
+}
+fun_b(mat_ad)
+
+```
+__c. El degree de los nodos.__
+El degree de un nodo es el número de conexiones que tiene un nodo. En las matrices de adyacencia e incidencia el 0 implica una conexion inexistente entre nodos, y al menos que nuestra red sea pesada, el lenguage será binario, por lo que la suma de los renglones será el número de conexiones que tiene un nodo, así como la cantidad de números en un renglón que sean mayores a 0. 
+```{r}
+#Debido a que mi red no es pesada, uso la funcion lapply para decirle a r que me sume todos los numéros
+#de mi renglon (nodo), este será el degree 
+degree<- function (x){
+  apply(mat_ad, 2, FUN = sum)}
+
+```
+__d. El histograma del degree.__
+A continuación crearemos una función con los datos obtenidos con la función anterior. como en la funcion anterior calculamos el degree unicamente de los renglones (in),este será nuestro degree de conexiones internas
+```{r}
+a_in<- sort(degree(mat_ad), decreasing = TRUE)
+#para el degree de las columnas solo cambiamos el 2 por el 1 en la funcion degree
+degree_out<- function (x){
+  apply(mat_ad, 1, FUN = sum)}
+
+a_out<- sort(degree_out(mat_ad), decreasing = TRUE)
+
+```
+**Distribución del degree**
+```{r}
+hist(a_in)
+```
+
+
+```{r}
+hist(a_out)
+```
+
+
+## Problema 4 
+```A partir de la red de interacción de proteínas alojada en la librería igraphdata, que puedes llamar mediante data(yeast) elabora un programa en R (acá sí puedes usar librerías especializadas de R) que :```
+```{r}
+##cargo mi paquete igraph
+library("igraph")
+library("igraphdata") #cargo la libreria que contiene mis datos 
+data("yeast") #le indico a r que usaremos la base de datos de levaduras
+```
+__a. Calcule la distribución de conectividades y grafique esa distribución . Discute tu resultado.__
+
+#Para calcular la distribucion de conectividades 
+
+```{r}
+plot(degree.distribution(yeast)) #para hacer mi gráfico de distribución de conectividades 
+```
+
+Observando el gáfico de distribución, se observa que el degree tiene una distribución de cola larga, indicando que hay muchos nodos con pocas conexiones y pocos nodos con muchas conexiones, dando como resultado una red robusta. 
+
+__b. Grafique el boxplot de la distribución de conectividades y discute tu resultado.__
+```{r}
+boxplot(degree.distribution(yeast)) #para hacer mi boxplot de distribución de conectividades 
+```
+El boxplot indica que qu hay un nodo que tiene muchisimas conexiones o está totalmente conectado con los nodos de la red, por lo que sería un Hub, pero la mayoría de nuestros nodos tienen pocas conexiones.  
+
+__c. Encuentre la proporción de nodos que tienen 15 o más conectividades.__
+Primero quiero saber si mi red es dirigida o no dirigida para evitar hacer dos analizizs de conectividades para lo cual usaré la función (is. directed), para preguntarle a r si mi red es dirigida 
+```{r}
+is.directed(yeast)  #No es una red dirigida, por lo que solo necesitaremos una medida de conectividad. 
+d15<-function(){
+  if (degree(yeast)>=15){
+    print(degree(yeast)>=15)
+  } 
+}
+
+```
+
+__e. Calcule el diámetro__
+```{r}
+diam<- diameter(yeast)
+diam
+```
+__f. La trayectoria más larga.__
+```{r}
+farthest_vertices(yeast)
+```
+
+__i. Clusterizar la red por al menos dos métodos y determinar el tamaño del clúster más grande.__
+```{r}
+x<- cluster_infomap(yeast)
+y<-transitivity(yeast)
+
+```
